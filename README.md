@@ -190,12 +190,6 @@ pip install -r requirements.txt
 
 ---
 
-## 📄 License
-MIT License — free for modification and distribution with attribution.
-
----
-
 ## 👨‍💻 Developed by
-**ByteForge (Arka Diaksa)**  
+**ByteForge**  
 Built using **Python 3**, **Requests**, and **Playwright**  
-Tested on Windows Server 2019 VPS
