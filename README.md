@@ -1,115 +1,172 @@
-📄 Deskripsi Singkat
+📈 IDX Auto Watcher (Announcement & Financial Report)
 
-Sistem ini akan secara otomatis mengambil data keterbukaan informasi dan laporan keuangan dari situs resmi Bursa Efek Indonesia (IDX), lalu mengirimkan notifikasi ke Telegram setiap kali ada pengumuman atau laporan baru.
+Automated Python system for monitoring corporate announcements and financial statements (PDF) from the Indonesia Stock Exchange (IDX)
+, then sending instant Telegram notifications whenever new data appears.
 
-Terdiri dari dua script utama:
+✨ Features
 
-get_announcement.py → memantau aksi korporasi
+📰 Fetches Corporate Actions via GetAnnouncement endpoint
 
-get_financial_report.py → memantau laporan keuangan (FinancialStatement PDF)
+📊 Fetches Financial Statements (only FinancialStatement-YYYY-TWn-XXXX.pdf) via GetFinancialReport endpoint
 
-⚙️ Persyaratan Sistem
+🧠 Uses SQLite cache to prevent duplicate notifications
 
-Pastikan VPS Windows Anda sudah memiliki:
+🤖 Sends formatted updates directly to Telegram Bot
 
-Python 3.10 atau lebih baru
+🕵️‍♂️ Playwright fallback when Cloudflare blocks direct requests
 
-Koneksi internet stabil
+⏰ Auto-loops every few minutes (configurable)
 
-Telegram Bot Token dan Chat ID
+📂 Project Structure
+idx-watcher/
+│
+├── get_announcement.py          # Monitors corporate announcements
+├── get_financial_report.py      # Monitors financial reports (FinancialStatement PDFs)
+├── run_get_announcement.bat     # Windows startup script for announcement watcher
+├── run_get_financial_report.bat # Windows startup script for financial watcher
+├── requirements.txt             # Python dependencies
+├── announcement_cache.db        # SQLite cache (auto-created)
+├── financial_cache.db           # SQLite cache (auto-created)
+└── README.md                    # Project documentation
 
-🧩 Langkah Instalasi
-1. Install dependensi Python
+⚙️ Requirements
 
-Buka Command Prompt (CMD), lalu jalankan:
+Python 3.10+
 
-pip install requests playwright
+Windows VPS or PC
+
+Internet access
+
+Telegram Bot Token + Chat ID
+
+🚀 Installation
+1. Clone Repository
+git clone https://github.com/yourusername/idx-watcher.git
+cd idx-watcher
+
+2. Create Virtual Environment
+python -m venv venv
+venv\Scripts\activate
+
+3. Install Dependencies
+pip install -r requirements.txt
 playwright install chromium
 
-2. Siapkan file proyek
+4. Configure Telegram Credentials
 
-Ekstrak semua file ke satu folder, misalnya:
+Edit both .py files:
 
-C:\idx-watcher\
+TELEGRAM_TOKEN = "YOUR_BOT_TOKEN"
+TELEGRAM_CHAT_ID = 1234567890
 
+▶️ Running the Scripts
+Option 1 — Manual (CMD)
+python get_announcement.py
+python get_financial_report.py
 
-Isi folder:
+Option 2 — Windows .BAT (Recommended)
 
-get_announcement.py
-get_financial_report.py
+Double-click either:
+
 run_get_announcement.bat
+
 run_get_financial_report.bat
-README.txt
 
-3. Edit token Telegram (jika perlu)
+Each script runs indefinitely, checking every 5 minutes.
 
-Buka file .py menggunakan teks editor (misal: Notepad), dan ubah dua variabel ini di bagian atas:
+Option 3 — Task Scheduler (Auto-Start on Boot)
 
-TELEGRAM_TOKEN = "ISI_DENGAN_TOKEN_BOT_ANDA"
-TELEGRAM_CHAT_ID = ISI_DENGAN_CHAT_ID_ANDA
+Open Task Scheduler
 
-▶️ Cara Menjalankan
-Pilihan 1 — Manual
+Create Task → Actions → Start a program
 
-Klik dua kali file .bat:
+Point to one of the .bat files
 
-run_get_announcement.bat → memantau aksi korporasi
+Set trigger → “At system startup” or “Every 5 minutes”
 
-run_get_financial_report.bat → memantau laporan keuangan
-
-Kedua script akan berjalan otomatis dan memeriksa data setiap 5 menit.
-
-Pilihan 2 — Otomatis (disarankan)
-
-Agar berjalan terus walau VPS restart:
-
-Buka menu Task Scheduler di Windows.
-
-Pilih Create Task → Actions → Start a program
-
-Arahkan ke file .bat (contoh: C:\idx-watcher\run_get_financial_report.bat)
-
-Set trigger ke At startup atau Every 5 minutes
-
-💬 Format Notifikasi di Telegram
-
-Contoh pesan:
-
-🏦 <b>BBRI</b> (Financial Statement)
-📅 2025-10-28
-📄 Financial Statement TW1 2025 - Bank Rakyat Indonesia (BBRI)
-🔗 https://www.idx.co.id/.../FinancialStatement-2025-I-BBRI.pdf
-
-
-atau untuk pengumuman:
-
+💬 Telegram Output Examples
+Announcement
 🏦 <b>BUVA</b> (Announcement)
 📅 2025-10-28
 📄 Keterbukaan Informasi terkait Aksi Korporasi - Rencana Penambahan Modal
 🔗 https://www.idx.co.id/StaticData/NewsAndAnnouncement/ANNOUNCEMENTSTOCK/...
 
-🗂️ Database Cache
+Financial Report
+🏦 <b>ABBA</b> (Financial Statement)
+📅 2025-10-28
+📄 Financial Statement TW1 2025 - Mahaka Media Tbk (ABBA)
+🔗 https://www.idx.co.id/.../Laporan%20Keuangan%20Tahun%202025/TW1/ABBA/FinancialStatement-2025-I-ABBA.pdf
 
-Setiap script akan otomatis membuat file SQLite:
+🧩 How It Works
 
-announcement_cache.db
+Fetch JSON from IDX public endpoints
 
-financial_cache.db
+GetAnnouncement
 
-Fungsi: menyimpan data yang sudah dikirim agar tidak duplikat setiap kali dijalankan.
+GetFinancialReport
 
-Jika ingin memulai dari awal (reset):
+Parse and filter data:
 
-Tutup script.
+Only top 5 newest items
 
-Hapus file .db.
+FinancialStatement PDFs only
 
-Jalankan ulang script.
+Check local SQLite DB to prevent duplicates
 
-💡 Catatan Teknis Tambahan
+Send formatted Telegram messages
 
-Jika koneksi ke IDX diblokir oleh Cloudflare, sistem otomatis beralih ke Playwright headless browser.
+Wait 5 minutes → repeat loop
 
-URL laporan yang memiliki spasi otomatis dikonversi agar valid di Telegram.
+If blocked by Cloudflare → automatically retries using Playwright headless Chromium.
 
-Interval pengecekan dapat diubah di bagian atas file (POLL_INTERVAL_MINUTES).
+🗂️ Database Schema
+
+Each script has its own .db file.
+
+Column	Description
+id	Unique identifier
+title	Announcement or report title
+kode	Stock ticker
+tanggal	Publication date
+link	Direct PDF URL
+source	“Announcement” / “Financial Statement”
+first_seen	First detection date
+last_sent	Last sent date (prevents duplicates)
+⚙️ Configuration
+
+Modify these constants at the top of each script if needed:
+
+POLL_INTERVAL_MINUTES = 5   # Interval between checks
+DB_PATH = "financial_cache.db"  # or announcement_cache.db
+
+🧪 Testing
+
+Run locally:
+
+python get_financial_report.py
+
+
+If successful, you should see logs like:
+
+Financial Statement: 3 new records.
+Sent: AALI_FinancialStatement_TW1_2025
+Sleeping 5 minutes...
+
+
+and corresponding messages in Telegram.
+
+🧰 Rebuild Environment
+
+If sharing with others or deploying elsewhere:
+
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+
+💡 Notes
+
+You can safely delete .db files anytime to reset history.
+
+URL encoding ensures links with spaces work correctly in Telegram.
+
+Both scripts can run simultaneously without conflict.
